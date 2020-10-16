@@ -71,7 +71,30 @@ class CameraCalibrator:
         HINT: it does not matter where your frame it, as long as you are consistent!
         '''
         ########## Code starts here ##########
+        # Board dimensions
+        N_cols = 9
+        M_rows = 7
 
+        # Xg and Yg will be list of np arrays 
+        Xg = []
+        Yg = []
+
+        # Go through each board
+        for curr_board_u in u_meas:
+            x = []
+            y = []
+            # Populate x and y arrays (created as lists and then converted later)
+            for index in range(curr_board_u):
+                xval = (index % N_cols) * self.d_square
+                x.append(xval)
+                yval = (index / N_cols) * self.d_square
+                y.append(yval)
+
+            # Update Xg and Yg 
+            Xg.append(np.array(xval))
+            Yg.append(np.array(yval))
+
+        corner_coordinates = (Xg, Yg)
         ########## Code ends here ##########
         return corner_coordinates
 
