@@ -249,7 +249,17 @@ class CameraCalibrator:
 
         '''
         ########## Code starts here ##########
-
+        Pw = np.array([X, Y, Z])
+        Pc_list = []
+        for col in Pw.shape[1]:
+            Pw_i = Pw[:,col]
+            Pw_i.shape = (3,1)
+            Pc_i = t + np.matmul(R,Pw_i)
+            Pc_list.append(Pc_i)
+        
+        Pc = np.vstack(Pc_list)
+        x = Pc[:,1]
+        y = Pc[:,2]
         ########## Code ends here ##########
         return x, y
 
@@ -264,7 +274,24 @@ class CameraCalibrator:
             u, v: the coordinates in the ideal pixel image plane
         '''
         ########## Code starts here ##########
+        Ph_w = np.array([X, Y, Z, np.ones(np.size(X))]) #homogeneus world coordinates
 
+        t.shape = (3,1) #for block concatenation
+        rt_block = np.block([
+            [R, t]
+        ])
+        bigMatrix = np.matmul(A, rt_block)
+
+        ph_list = []
+        for col in Ph_w.shape[1]:
+            Ph_w_i = Ph_w[:,col]
+            Ph_w_i.shape = (4,1)
+            ph_i = np.matmul(bigMatrix, Ph_w_i)
+            ph_list.append(ph_i)
+        
+        ph = np.vstack(ph_list)
+        u = ph[:,1]
+        v = ph[:,2]
         ########## Code ends here ##########
         return u, v
 
