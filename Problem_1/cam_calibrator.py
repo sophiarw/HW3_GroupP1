@@ -185,12 +185,26 @@ class CameraCalibrator:
         u, s, vh = np.linalg.svd(V)
         b = vh[1,:] # b is first row of Vh (this gives us vh_1 which is what we want)
 
-        # Now use b to back out the parameters and fill out our matrix A
-
-
-
-
+        # Finally use b to back out the parameters and fill out our matrix A
+        B11 = b[0]
+        B12 = b[1]
+        B22 = b[2]
+        B13 = b[3]
+        B23 = b[4]
+        B33 = b[5]
         
+        v0 = (B12*B13 - B11*B23)/(B11*B22 - (B12**2))
+        lamb = B33 - (((B13**2) + v0*(B12*B13 - B11*B23))/(B11)) #lambda
+        alpha = np.sqrt((lamb/B11))
+        beta = np.sqrt((lamb*B11)/(B11*B22 - (B12**2)))
+        gamma = (-B12*(alpha**2)*beta)/lamb
+        u0 = ((gamma*v0)/beta) - ((B13*(alpha**2))/lamb)
+
+        A = np.array([
+            [alpha, gamma, u0],
+            [0, beta, v0],
+            [0, 0, 1]
+        ])
         ########## Code ends here ##########
         return A
 
@@ -204,7 +218,23 @@ class CameraCalibrator:
             t: the translation vector
         '''
         ########## Code starts here ##########
+        Ainv = np.linalg.inv(A)
+        h1 = H[:,1]
+        h2 = H[:,2]
+        h3 = H[:,3]
+        lamb1 = 1 / (np.linalg.norm(np.matmul(Ainv,h1))) #lambda1
+        lamb2 = 1/ (np.linalg.norm(np.matmul(Ainv,h2))) #lambda2
 
+        # Rotation matrix R
+        r1 = lamb1*np.matmul(Ainv, h1)
+        r2 = lamb2*np.matmul(Ainv, h2)
+        r3 = np.cross(r1, r2)
+        Q = np.array([r1, r2, r3]).T # build preliminary rotation matrix
+        u, s, vh = np.linalg.svd(Q) # use svd to estimate the best rotation matrix
+        R = np.matmul(u, vh)
+
+        # Translation vector t
+        t = lamb1*np.matmul(Ainv, h3)
         ########## Code ends here ##########
         return R, t
 
