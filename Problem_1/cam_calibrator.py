@@ -123,7 +123,7 @@ class CameraCalibrator:
         P_tilde_list = []
         for col in Ph_w.shape[1]:
             Ph_w_i = Ph_w[:,col]
-            Ph_w_i = np.reshape(Ph_w_i, (np.size(Ph_w_i), 1)) # go from (n,) to (n,1) for transpose later
+            Ph_w_i = np.reshape(Ph_w_i, (np.size(Ph_w_i), 1)) # go from (n,) to (n,1) for transpose below
             Ph_w_i_t = np.transpose(Ph_w_i) # homogeneus world coordinate i transposed
             # Build block of Ptilde
             zeroesvec = np.zeros((1, np.size(Ph_w_i)))
@@ -137,7 +137,7 @@ class CameraCalibrator:
     
         # Now use SVD to solve constrained least squares problem and get satisfactory m
         u, s, vh = np.linalg.svd(P_tilde)
-        m = vh[1,:] # m is first row of Vh (this give us vh_1 which is what we want)
+        m = vh[1,:] # m is first row of Vh (this gives us vh_1 which is what we want)
         m1 = m[0:3] # first row of H
         m2 = m[3:6] # second row of H
         m3 = m[6:9] # third row of H
@@ -160,6 +160,37 @@ class CameraCalibrator:
         '''
         ########## Code starts here ##########
 
+        # define inner function to calculate V for each Homography matrix in list H
+        def calcV(i,j,currH):
+            first_entry = currH[i,0]*currH[j,0]
+            second_entry = currH[i,0]*currH[j,1] + currH[i,1]*currH[j,0]
+            third_entry = currH[i,1]*currH[j,1]
+            fourth_entry = currH[i,2]*currH[j,0] + currH[i,0]*currH[j,2]
+            fifth_entry = currH[i,2]*currH[j,1] + currH[i,1]*currH[j,2]
+            sixth_entry = currH[i,2]*currH[j,2]
+
+            v_ij_t = np.array([[first_entry, second_entry, third_entry, fourth_entry, fifth_entry, sixth_entry]])
+            return v_ij_t
+        
+        V_list = []
+        for curH in H:
+            v_onetwo_t = calcV(1,2, curH)
+            v_oneone_minus_v_twotwo_t = calcV(1,1,curH) - calcV(2,2,curH)
+            cur_image_v = np.stack((v_onetwo_t, v_oneone_minus_v_twotwo_t))
+            V_list.append(cur_image_v)
+        
+        V = np.vstack(V_list)
+    
+        # Now use SVD to solve another constrained least squares and get satisfactory b
+        u, s, vh = np.linalg.svd(V)
+        b = vh[1,:] # b is first row of Vh (this gives us vh_1 which is what we want)
+
+        # Now use b to back out the parameters and fill out our matrix A
+
+
+
+
+        
         ########## Code ends here ##########
         return A
 
