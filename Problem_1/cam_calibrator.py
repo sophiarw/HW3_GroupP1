@@ -83,16 +83,17 @@ class CameraCalibrator:
         for curr_board_u in u_meas:
             x = []
             y = []
+		
             # Populate x and y arrays (created as lists and then converted later)
-            for index in range(curr_board_u):
+            for index in range(np.size(curr_board_u)):
                 xval = (index % N_cols) * self.d_square
                 x.append(xval)
                 yval = (index / N_cols) * self.d_square
                 y.append(yval)
-
+	
             # Update Xg and Yg 
-            Xg.append(np.array(xval))
-            Yg.append(np.array(yval))
+            Xg.append(np.array(x))
+            Yg.append(np.array(y))
 
         corner_coordinates = (Xg, Yg)
         ########## Code ends here ##########
@@ -118,10 +119,10 @@ class CameraCalibrator:
         sizeX  = np.size(X) # dimension of X "dim(X)" which is also dim(Y) = dim(u_meas) = dim(v_meas)
 
         onesvec = np.ones(sizeX) # vector of ones for homogeneus representation of world coordinates
-        Ph_w = np.array([X, Y, onesvec]) 
-        
+        Ph_w = np.array([X, Y, onesvec], dtype = 'float' ) 
+        	
         P_tilde_list = []
-        for col in Ph_w.shape[1]:
+        for col in range(Ph_w.shape[1]):
             Ph_w_i = Ph_w[:,col]
             Ph_w_i = np.reshape(Ph_w_i, (np.size(Ph_w_i), 1)) # go from (n,) to (n,1) for transpose below
             Ph_w_i_t = np.transpose(Ph_w_i) # homogeneus world coordinate i transposed
@@ -134,13 +135,16 @@ class CameraCalibrator:
             P_tilde_list.append(block)
         
         P_tilde = np.vstack(P_tilde_list) #finally build P_tilde from list of blocks
-    
+    		
         # Now use SVD to solve constrained least squares problem and get satisfactory m
         u, s, vh = np.linalg.svd(P_tilde)
-        m = vh[1,:] # m is first row of Vh (this gives us vh_1 which is what we want)
+        m = vh[0,:] # m is first row of Vh (this gives us vh_1 which is what we want)
         m1 = m[0:3] # first row of H
         m2 = m[3:6] # second row of H
         m3 = m[6:9] # third row of H
+
+	#print np.shape(m)
+	#print m
 
         H = np.vstack((m1,m2,m3))
         ########## Code ends here ##########
@@ -169,22 +173,22 @@ class CameraCalibrator:
             fifth_entry = currH[i,2]*currH[j,1] + currH[i,1]*currH[j,2]
             sixth_entry = currH[i,2]*currH[j,2]
 
-            v_ij_t = np.array([[first_entry, second_entry, third_entry, fourth_entry, fifth_entry, sixth_entry]])
+            v_ij_t = np.array([[first_entry, second_entry, third_entry, fourth_entry, fifth_entry, sixth_entry]], dtype = 'float')
             return v_ij_t
         
         V_list = []
         for curH in H:
             v_onetwo_t = calcV(1,2, curH)
             v_oneone_minus_v_twotwo_t = calcV(1,1,curH) - calcV(2,2,curH)
-            cur_image_v = np.stack((v_onetwo_t, v_oneone_minus_v_twotwo_t))
+            cur_image_v = np.vstack((v_onetwo_t, v_oneone_minus_v_twotwo_t))
             V_list.append(cur_image_v)
         
         V = np.vstack(V_list)
-    
+        V = V.astype('float')
+
         # Now use SVD to solve another constrained least squares and get satisfactory b
         u, s, vh = np.linalg.svd(V)
-        b = vh[1,:] # b is first row of Vh (this gives us vh_1 which is what we want)
-
+        b = vh[0,:] # b is first row of Vh (this gives us vh_1 which is what we want)
         # Finally use b to back out the parameters and fill out our matrix A
         B11 = b[0]
         B12 = b[1]
@@ -193,10 +197,10 @@ class CameraCalibrator:
         B23 = b[4]
         B33 = b[5]
         
-        v0 = (B12*B13 - B11*B23)/(B11*B22 - (B12**2))
-        lamb = B33 - (((B13**2) + v0*(B12*B13 - B11*B23))/(B11)) #lambda
+	v0 = (B12*B13 - B11*B23)/(B11*B22 - (B12**2))
+        lamb = np.absolute(B33 - (((B13**2) + v0*(B12*B13 - B11*B23))/(B11))) #lambda
         alpha = np.sqrt((lamb/B11))
-        beta = np.sqrt((lamb*B11)/(B11*B22 - (B12**2)))
+        beta = np.sqrt((lamb*B11)/np.absolute((B11*B22 - (B12**2))))
         gamma = (-B12*(alpha**2)*beta)/lamb
         u0 = ((gamma*v0)/beta) - ((B13*(alpha**2))/lamb)
 
@@ -219,9 +223,9 @@ class CameraCalibrator:
         '''
         ########## Code starts here ##########
         Ainv = np.linalg.inv(A)
-        h1 = H[:,1]
-        h2 = H[:,2]
-        h3 = H[:,3]
+        h1 = H[:,0]
+        h2 = H[:,1]
+        h3 = H[:,2]
         lamb1 = 1 / (np.linalg.norm(np.matmul(Ainv,h1))) #lambda1
         lamb2 = 1/ (np.linalg.norm(np.matmul(Ainv,h2))) #lambda2
 
@@ -249,17 +253,18 @@ class CameraCalibrator:
 
         '''
         ########## Code starts here ##########
-        Pw = np.array([X, Y, Z])
+        Pw = np.array([X, Y, Z], ndmin = 2)
         Pc_list = []
-        for col in Pw.shape[1]:
+        for col in range(Pw.shape[1]):
             Pw_i = Pw[:,col]
             Pw_i.shape = (3,1)
             Pc_i = t + np.matmul(R,Pw_i)
+	    Pw_i.shape = (3,)
             Pc_list.append(Pc_i)
         
         Pc = np.vstack(Pc_list)
-        x = Pc[:,1]
-        y = Pc[:,2]
+        x = Pc[:,0]
+        y = Pc[:,1]
         ########## Code ends here ##########
         return x, y
 
@@ -274,7 +279,7 @@ class CameraCalibrator:
             u, v: the coordinates in the ideal pixel image plane
         '''
         ########## Code starts here ##########
-        Ph_w = np.array([X, Y, Z, np.ones(np.size(X))]) #homogeneus world coordinates
+        Ph_w = np.array([X, Y, Z, np.ones(np.size(X))], ndmin = 2) #homogeneus world coordinates
 
         t.shape = (3,1) #for block concatenation
         rt_block = np.block([
@@ -283,15 +288,16 @@ class CameraCalibrator:
         bigMatrix = np.matmul(A, rt_block)
 
         ph_list = []
-        for col in Ph_w.shape[1]:
+        for col in range(Ph_w.shape[1]):
             Ph_w_i = Ph_w[:,col]
             Ph_w_i.shape = (4,1)
             ph_i = np.matmul(bigMatrix, Ph_w_i)
+            ph_i.shape = (3,)
             ph_list.append(ph_i)
         
         ph = np.vstack(ph_list)
-        u = ph[:,1]
-        v = ph[:,2]
+        u = ph[:,0]
+        v = ph[:,1]
         ########## Code ends here ##########
         return u, v
 
