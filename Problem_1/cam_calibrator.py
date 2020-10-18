@@ -207,7 +207,6 @@ class CameraCalibrator:
             [0, beta, v0],
             [0, 0, 1]
         ])
-	pdb.set_trace()
 
         ########## Code ends here ##########
         return A
