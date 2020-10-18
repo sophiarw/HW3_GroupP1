@@ -83,12 +83,12 @@ class CameraCalibrator:
         for curr_board_u in u_meas:
             x = []
             y = []
-		
+            
             # Populate x and y arrays (created as lists and then converted later)
             for index in range(np.size(curr_board_u)):
                 xval = (index % N_cols) * self.d_square
                 x.append(xval)
-                yval = (index / N_cols) * self.d_square
+                yval = np.floor((index / N_cols)) * self.d_square
                 y.append(yval)
 	
             # Update Xg and Yg 
@@ -133,18 +133,17 @@ class CameraCalibrator:
                 [zeroesvec, Ph_w_i_t, -v_meas[col]*Ph_w_i_t]
             ])
             P_tilde_list.append(block)
-        
+
         P_tilde = np.vstack(P_tilde_list) #finally build P_tilde from list of blocks
 
         # Now use SVD to solve constrained least squares problem and get satisfactory m
         u, s, vh = np.linalg.svd(P_tilde)
         m = vh[0,:] # m is first row of Vh (this gives us vh_1 which is what we want)
-        m1 = m[0:3] # first column of H
-        m2 = m[3:6] # second column of H
-        m3 = m[6:9] # third column of H
+        m1 = m[0:3] # first row of H
+        m2 = m[3:6] # second row of H
+        m3 = m[6:9] # third row of H
 
         H = np.vstack((m1,m2,m3)).T
-	print np.shape(H)
         ########## Code ends here ##########
         return H
 
