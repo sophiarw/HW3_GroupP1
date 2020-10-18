@@ -139,12 +139,12 @@ class CameraCalibrator:
         # Now use SVD to solve constrained least squares problem and get satisfactory m
         u, s, vh = np.linalg.svd(P_tilde)
         m = vh[0,:] # m is first row of Vh (this gives us vh_1 which is what we want)
-        m1 = m[0:3] # first row of H
-        m2 = m[3:6] # second row of H
-        m3 = m[6:9] # third row of H
+        m1 = m[0:3] # first column of H
+        m2 = m[3:6] # second column of H
+        m3 = m[6:9] # third column of H
 
-
-        H = np.vstack((m1,m2,m3))
+        H = np.vstack((m1,m2,m3)).T
+	print np.shape(H)
         ########## Code ends here ##########
         return H
 
