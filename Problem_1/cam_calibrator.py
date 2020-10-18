@@ -143,7 +143,7 @@ class CameraCalibrator:
         m2 = m[3:6] # second column of H
         m3 = m[6:9] # third column of H
 
-        H = np.vstack((m1,m2,m3)).T
+        H = np.vstack((m1,m2,m3))
         ########## Code ends here ##########
         return H
 
@@ -186,7 +186,7 @@ class CameraCalibrator:
         # Now use SVD to solve another constrained least squares and get satisfactory b
         u, s, vh = np.linalg.svd(V)
         b = vh[-1,:] # b is last row of Vh (this gives us smallest vh_1 which is what we want)
-	b = np.absolute(b)
+	
         # Finally use b to back out the parameters and fill out our matrix A
         B11 = b[0]
         B12 = b[1]
@@ -196,9 +196,9 @@ class CameraCalibrator:
         B33 = b[5]
         
 	v0 = (B12*B13 - B11*B23)/(B11*B22 - (B12**2))
-        lamb = np.absolute(B33 - (((B13**2) + v0*(B12*B13 - B11*B23))/(B11))) #lambda
+        lamb = B33 - (((B13**2) + v0*(B12*B13 - B11*B23))/(B11)) #lambda
         alpha = np.sqrt((lamb/B11))
-        beta = np.sqrt((lamb*B11)/np.absolute((B11*B22 - (B12**2))))
+        beta = np.sqrt((lamb*B11)/(B11*B22 - (B12**2)))
         gamma = (-B12*(alpha**2)*beta)/lamb
         u0 = ((gamma*v0)/beta) - ((B13*(alpha**2))/lamb)
 
@@ -207,6 +207,7 @@ class CameraCalibrator:
             [0, beta, v0],
             [0, 0, 1]
         ])
+	pdb.set_trace()
 
         ########## Code ends here ##########
         return A
@@ -230,7 +231,7 @@ class CameraCalibrator:
 
         # Rotation matrix R
         r1 = lamb1*np.matmul(Ainv, h1)
-        r2 = lamb2*np.matmul(Ainv, h2)
+        r2 = lamb1*np.matmul(Ainv, h2)
         r3 = np.cross(r1, r2)
         Q = np.array([r1, r2, r3]).T # build preliminary rotation matrix
         u, s, vh = np.linalg.svd(Q) # use svd to estimate the best rotation matrix
@@ -238,6 +239,7 @@ class CameraCalibrator:
 
         # Translation vector t
         t = lamb1*np.matmul(Ainv, h3)
+
         ########## Code ends here ##########
         return R, t
 
@@ -258,7 +260,6 @@ class CameraCalibrator:
             Pw_i = Pw[:,col]
             Pw_i.shape = (3,1)
             Pc_i = t + np.matmul(R,Pw_i)
-	    Pw_i.shape = (3,)
             Pc_list.append(Pc_i)
         
         Pc = np.vstack(Pc_list)
