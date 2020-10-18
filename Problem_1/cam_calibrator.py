@@ -175,8 +175,8 @@ class CameraCalibrator:
         
         V_list = []
         for curH in H:
-            v_onetwo_t = calcV(1,2, curH)
-            v_oneone_minus_v_twotwo_t = calcV(1,1,curH) - calcV(2,2,curH)
+            v_onetwo_t = calcV(0,1, curH)
+            v_oneone_minus_v_twotwo_t = calcV(0,0,curH) - calcV(1,1,curH)
             cur_image_v = np.vstack((v_onetwo_t, v_oneone_minus_v_twotwo_t))
             V_list.append(cur_image_v)
         
@@ -185,7 +185,7 @@ class CameraCalibrator:
 
         # Now use SVD to solve another constrained least squares and get satisfactory b
         u, s, vh = np.linalg.svd(V)
-        b = vh[-1,:] # b is first row of Vh (this gives us vh_1 which is what we want)
+        b = vh[-1,:] # b is last row of Vh (this gives us smallest vh_1 which is what we want)
 	b = np.absolute(b)
         # Finally use b to back out the parameters and fill out our matrix A
         B11 = b[0]
