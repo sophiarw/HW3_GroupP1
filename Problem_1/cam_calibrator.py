@@ -144,7 +144,6 @@ class CameraCalibrator:
         m3 = m[6:9] # third column of H
 
         H = np.vstack((m1,m2,m3)).T
-	pdb.set_trace()
         ########## Code ends here ##########
         return H
 
@@ -186,7 +185,8 @@ class CameraCalibrator:
 
         # Now use SVD to solve another constrained least squares and get satisfactory b
         u, s, vh = np.linalg.svd(V)
-        b = vh[0,:] # b is first row of Vh (this gives us vh_1 which is what we want)
+        b = vh[-1,:] # b is first row of Vh (this gives us vh_1 which is what we want)
+	b = np.absolute(b)
         # Finally use b to back out the parameters and fill out our matrix A
         B11 = b[0]
         B12 = b[1]
@@ -207,6 +207,7 @@ class CameraCalibrator:
             [0, beta, v0],
             [0, 0, 1]
         ])
+
         ########## Code ends here ##########
         return A
 
