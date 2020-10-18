@@ -120,22 +120,22 @@ class CameraCalibrator:
 
         onesvec = np.ones(sizeX) # vector of ones for homogeneus representation of world coordinates
         Ph_w = np.array([X, Y, onesvec], dtype = 'float' ) 
-        	
+
         P_tilde_list = []
         for col in range(Ph_w.shape[1]):
             Ph_w_i = Ph_w[:,col]
-            Ph_w_i = np.reshape(Ph_w_i, (np.size(Ph_w_i), 1)) # go from (n,) to (n,1) for transpose below
+	    Ph_w_i.shape = (3,1)
             Ph_w_i_t = np.transpose(Ph_w_i) # homogeneus world coordinate i transposed
             # Build block of Ptilde
             zeroesvec = np.zeros((1, np.size(Ph_w_i)))
             block = np.block([
-                [-Ph_w_i_t, zeroesvec, u_meas[col]*Ph_w_i_t], # col is also current index of umeas and vmeas
-                [zeroesvec, -Ph_w_i_t, v_meas[col]*Ph_w_i_t]
+                [Ph_w_i_t, zeroesvec, -u_meas[col]*Ph_w_i_t], # col is also current index of umeas and vmeas
+                [zeroesvec, Ph_w_i_t, -v_meas[col]*Ph_w_i_t]
             ])
             P_tilde_list.append(block)
         
         P_tilde = np.vstack(P_tilde_list) #finally build P_tilde from list of blocks
-    		
+
         # Now use SVD to solve constrained least squares problem and get satisfactory m
         u, s, vh = np.linalg.svd(P_tilde)
         m = vh[0,:] # m is first row of Vh (this gives us vh_1 which is what we want)
@@ -143,8 +143,6 @@ class CameraCalibrator:
         m2 = m[3:6] # second row of H
         m3 = m[6:9] # third row of H
 
-	#print np.shape(m)
-	#print m
 
         H = np.vstack((m1,m2,m3))
         ########## Code ends here ##########
