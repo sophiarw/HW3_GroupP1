@@ -295,10 +295,11 @@ class CameraCalibrator:
             ph_i = np.matmul(bigMatrix, Ph_w_i)
             ph_i.shape = (3,)
             ph_list.append(ph_i)
+	    #pdb.set_trace()
         
         ph = np.vstack(ph_list)
-        u = ph[:,0]
-        v = ph[:,1]
+        u = ph[:,0]/ph[:,2]
+        v = ph[:,1]/ph[:,2]
         ########## Code ends here ##########
         return u, v
 
