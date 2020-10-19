@@ -163,9 +163,6 @@ class CameraCalibrator:
 
         # define inner function to calculate V for each Homography matrix in list H
         def calcV(i,j,currH):
-	    h1 = currH[:, 0]
-	    h2 = currH[:, 1]
-	    h3 = currH[:, 2]
 
 	    
             first_entry = currH[0,i]*currH[0,j]
@@ -174,13 +171,6 @@ class CameraCalibrator:
             fourth_entry = currH[2,i]*currH[0,j] + currH[0,i]*currH[2,j]
             fifth_entry = currH[2,i]*currH[1,j] + currH[1,i]*currH[2,j]
             sixth_entry = currH[2,i]*currH[2,j]
-
-            #first_entry = currH[i,0]*currH[j,0]
-            #second_entry = currH[i,0]*currH[j,1] + currH[i,1]*currH[j,0]
-
-            #fourth_entry = currH[i,2]*currH[j,0] + currH[i,0]*currH[j,2]
-            #fifth_entry = currH[i,2]*currH[j,1] + currH[i,1]*currH[j,2]
-            #sixth_entry = currH[i,2]*currH[j,2]
 
             v_ij_t = np.array([[first_entry, second_entry, third_entry, fourth_entry, fifth_entry, sixth_entry]], dtype = 'float')
             return v_ij_t
