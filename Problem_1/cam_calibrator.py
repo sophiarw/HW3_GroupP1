@@ -265,9 +265,9 @@ class CameraCalibrator:
         
         Pc = np.vstack(Pc_list)
 
-	y = Pc[:,0]
-        x = Pc[:,1]
-        ########## Code ends here ##########
+	x = Pc[:,0]
+        y = Pc[:,1]
+ 	######### Code ends here ##########
         return x, y
 
     def transformWorld2PixImageUndist(self, X, Y, Z, R, t, A):    # Zhang 2.1, Eq. (1)
