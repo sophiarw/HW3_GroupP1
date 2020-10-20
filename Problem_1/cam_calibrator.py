@@ -264,8 +264,9 @@ class CameraCalibrator:
             Pc_list.append(Pc_i)
         
         Pc = np.vstack(Pc_list)
-        x = Pc[:,0]/Pc[:,2]
-        y = Pc[:,1]/Pc[:,2]
+
+	y = Pc[:,0]
+        x = Pc[:,1]
         ########## Code ends here ##########
         return x, y
 
